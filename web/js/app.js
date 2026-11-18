@@ -4,6 +4,7 @@
 import { View, h } from './ui.js';
 import { HermesBackend } from './hermes.js';
 import { PiBackend } from './pi.js';
+import { HaxBackend } from './hax.js';
 import { homeify, truncate, fmtTokens } from './render.js';
 import {
   LOOKS, MODES, SCHEMES, ACCENTS, UI_FONTS, CODE_FONTS, TEXT_SIZES,
@@ -17,7 +18,8 @@ const store = {
 };
 const coarse = matchMedia('(pointer: coarse)').matches;
 const SESSION_PAGE = 40;
-const BACKENDS = { hermes: { sym: '☤', name: 'Hermes' }, pi: { sym: 'π', name: 'Pi' } };
+const BACKENDS = { hermes: { sym: '☤', name: 'Hermes' }, pi: { sym: 'π', name: 'Pi' }, hax: { sym: 'ħ', name: 'hax' } };
+const CLASSES = { hermes: HermesBackend, pi: PiBackend, hax: HaxBackend };
 
 class App {
   constructor() {
@@ -114,8 +116,7 @@ class App {
       el = h('div', { class: 'brand' }, n ? h('span', { class: 'sym', text: BACKENDS[n].sym }) : null, n ? BACKENDS[n].name : 'Stellwerk');
     }
     document.querySelector('.side-head > .be-switch, .side-head > .brand').replaceWith(el);
-    $('new-session').hidden = !on.length;
-    $('session-search').hidden = !on.length;
+    document.querySelector('.side-tools').hidden = !on.length;
     $('logout').hidden = !this.me.password_set;
   }
 
@@ -152,7 +153,7 @@ class App {
     this.setWidgets([]);
     this.clearAttachments();
     this.closeDrawer();
-    const B = name === 'pi' ? PiBackend : HermesBackend;
+    const B = CLASSES[name];
     const b = new B(this.view, this);
     b.home = this.home;
     b.rpc.backendName = name;
@@ -231,7 +232,7 @@ class App {
 
   async deleteSessionRow(s) {
     const b = this.backend;
-    const how = b.name === 'pi' ? 'It is moved to Stellwerk\'s trash folder.' : 'This cannot be undone.';
+    const how = b.name !== 'hermes' ? 'It is moved to Stellwerk\'s trash folder.' : 'This cannot be undone.';
     if (!confirm(`Delete “${s.title || 'Untitled'}”?\n\n${how}`)) return;
     try {
       await b.deleteById(s.id);
@@ -496,7 +497,7 @@ class App {
   // ------------------------------------------------------------ drawers
   async openChanges() {
     this.drawerKind = 'changes';
-    const title = this.backend.name === 'pi' ? 'Changes' : 'Changes & checkpoints';
+    const title = this.backend.name === 'hermes' ? 'Changes & checkpoints' : 'Changes';
     this.view.openDrawer(title, h('div', { class: 'dr-empty', text: 'Loading…' }));
     try { const el = await this.backend.changesPanel(); if (this.drawerKind === 'changes') this.view.openDrawer(title, el); }
     catch (e) { this.view.openDrawer(title, h('div', { class: 'dr-empty', text: e.message })); }
@@ -538,8 +539,8 @@ class App {
     const recent = store.get(recentKey, []);
     const pick = async (it) => {
       this.closeDrawer();
-      store.set(recentKey, [key(it), ...recent.filter((k) => k !== key(it))].slice(0, 5));
-      try { await b.setModel(it.value.model, it.value.provider); } catch (e) { this.view.toast(e.message, { err: true }); }
+      if (!it.value.ask) store.set(recentKey, [key(it), ...recent.filter((k) => k !== key(it))].slice(0, 5));
+      try { await b.setModel(it.value.model, it.value.provider, it.value); } catch (e) { this.view.toast(e.message, { err: true }); }
     };
     const row = (it, withGroup) => {
       const meta = [withGroup ? it.group : '', it.desc].filter(Boolean).join(' · ');
@@ -798,7 +799,7 @@ class App {
           : h('div', { class: 'dr-empty', text: 'Nothing in this period.' }),
         h('div', { class: 'set-hint', text: b.name === 'hermes'
           ? `From Hermes' session store (${all.sessions} session${all.sessions === 1 ? '' : 's'} with messages). Deleted sessions no longer count; a session's usage is dated by when it was last used.`
-          : `From Pi's session files (${all.sessions}). Deleted sessions no longer count.` }));
+          : `From ${b.appName}'s session files (${all.sessions}). Deleted sessions no longer count${b.name === 'hax' ? '; hax records no times per request, so a session counts on the day it was last used' : ''}.` }));
     }
     const body = $('drawer-body'); const keep = body.scrollTop;
     this.view.openDrawer(title, h('div', {}, secSession, secAll));

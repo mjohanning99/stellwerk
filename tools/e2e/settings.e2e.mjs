@@ -35,6 +35,8 @@ const openSettings = async () => {
 const agentSeg = (name) => page.locator('.set-card').filter({ hasText: name }).locator('.seg button');
 const settle = () => page.waitForTimeout(400);
 
+// this test is about two agents; a third one (hax) may be on in this config
+await page.evaluate(() => fetch('/api/settings/backends', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'hax', enabled: false }) }));
 await openSettings();
 await page.screenshot({ path: `${out}/settings.png` });
 

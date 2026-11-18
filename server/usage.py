@@ -147,3 +147,57 @@ def pi_usage(sessions_dir: Path) -> dict:
     for k in [k for k in _PI_CACHE if k not in seen]:
         del _PI_CACHE[k]
     return _aggregate(entries, len(seen))
+
+
+# ------------------------------------------------------------------ hax
+
+_HAX_CACHE: dict[str, tuple[float, int, list]] = {}   # path -> (mtime, size, [(model, totals)])
+
+
+def _hax_file_usage(path: Path, st: os.stat_result) -> list:
+    hit = _HAX_CACHE.get(str(path))
+    if hit and hit[0] == st.st_mtime and hit[1] == st.st_size:
+        return hit[2]
+    per: dict[str, dict] = {}
+    try:
+        with path.open("rb") as f:
+            for line in f:
+                if b'"turn_usage"' not in line:
+                    continue
+                try:
+                    r = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if r.get("kind") != "turn_usage" or r.get("inherited"):
+                    continue   # /fork copies: context this session read but did not pay for
+                u = r.get("usage") or {}
+                model = "/".join(x for x in (r.get("provider"), r.get("model")) if x) or "unknown"
+                t = per.setdefault(model, _empty())
+                t["input"] += _num(u.get("input"))
+                t["output"] += _num(u.get("output"))
+                t["cache_read"] += _num(u.get("cached"))
+                t["cache_write"] += _num(u.get("cache_write"))
+                t["calls"] += 1
+                t["cost"] += _num(u.get("cost_total", u.get("cost")))
+    except OSError:
+        pass
+    out = list(per.items())
+    _HAX_CACHE[str(path)] = (st.st_mtime, st.st_size, out)
+    return out
+
+
+def hax_usage(sessions_dir: Path) -> dict:
+    """hax's usage records carry no time, so a session's usage is dated by its last write."""
+    if not sessions_dir.is_dir():
+        return _aggregate([], 0)
+    entries, seen = [], set()
+    for p in sessions_dir.glob("*/*.jsonl"):
+        try:
+            st = p.stat()
+        except OSError:
+            continue
+        seen.add(str(p))
+        entries += [(st.st_mtime, model, t) for model, t in _hax_file_usage(p, st)]
+    for k in [k for k in _HAX_CACHE if k not in seen]:
+        del _HAX_CACHE[k]
+    return _aggregate(entries, len(seen))

@@ -2,15 +2,15 @@
 
 # Stellwerk
 
-**A web UI for the Hermes and Pi coding agents, in your browser and on your phone.**
+**A web UI for the Hermes, Pi and hax coding agents, in your browser and on your phone.**
 
-Stellwerk is a small server you run on your own machine. It gives the [Hermes](#what-are-hermes-and-pi) and [Pi](#what-are-hermes-and-pi) terminal coding agents a chat-style interface with streaming output, tool calls, diffs and approvals, so you can keep working with them from any browser.
+Stellwerk is a small server you run on your own machine. It gives the [Hermes, Pi and hax](#which-agents) terminal coding agents a chat-style interface with streaming output, tool calls, diffs and approvals, so you can keep working with them from any browser.
 
 *A Stellwerk is a railway signal box: the room where the switches are set that send each train down the right track.*
 
 ![Stellwerk with a Hermes session open: the session list on the left, a transcript with tool calls and an inline diff in the middle, the composer and status line at the bottom](docs/screenshots/hero.png)
 
-- [What are Hermes and Pi?](#what-are-hermes-and-pi)
+- [Which agents?](#which-agents)
 - [Features](#features)
 - [Quick start](#quick-start)
 - [Security](#security)
@@ -19,21 +19,22 @@ Stellwerk is a small server you run on your own machine. It gives the [Hermes](#
 - [FAQ and troubleshooting](#faq-and-troubleshooting)
 - [Contributing](#contributing)
 
-## What are Hermes and Pi?
+## Which agents?
 
-They're two independent, open-source coding agents that run in your terminal. Stellwerk doesn't replace them; it's another window onto the same agents, sessions and settings.
+Three independent, open-source coding agents that run in your terminal. Stellwerk doesn't replace them; it's another window onto the same agents, sessions and settings.
 
 - **[Hermes Agent](https://github.com/NousResearch/hermes-agent)** by [Nous Research](https://nousresearch.com) is a self-improving agent with skills, memory, subagents and a long-running gateway. [Docs](https://hermes-agent.nousresearch.com/docs/).
 - **[Pi](https://pi.dev)** by Mario Zechner is a deliberately minimal coding agent that you extend with TypeScript extensions. [Source](https://github.com/earendil-works/pi).
+- **[hax](https://github.com/OleksandrChekhovskyi/hax)** by Oleksandr Chekhovskyi is an even more minimal agent: one small C binary. It runs commands without asking for approval, by design, and Stellwerk shows its replies a message at a time rather than word by word.
 
-You need at least one of them installed. Stellwerk is a separate project and isn't affiliated with either.
+You need at least one of them installed. Stellwerk is a separate project and isn't affiliated with any of them.
 
 ## Features
 
-**Both agents, one UI**
+**Your agents, one UI**
 
-- Use Hermes, Pi, or both. With both on, a ☤ Hermes / π Pi switch sits at the top of the sidebar.
-- Turn either agent off in Settings, or point Stellwerk at an agent installed somewhere unusual.
+- Use any of them. With more than one on, a ☤ Hermes / π Pi / ħ hax switch sits at the top of the sidebar.
+- Turn any agent off in Settings. If one is installed somewhere Stellwerk doesn't look, set its path there.
 
 **A transcript you can follow**
 
@@ -79,7 +80,7 @@ You need:
 
 - Linux or macOS (development happens on Linux),
 - Python 3.10 or newer,
-- [Hermes](https://hermes-agent.nousresearch.com/docs/) or [Pi](https://pi.dev) installed and working in your terminal. Stellwerk looks for `hermes` and `pi` on your `PATH`, then in `~/.local/bin`.
+- [Hermes](https://hermes-agent.nousresearch.com/docs/), [Pi](https://pi.dev) or [hax](https://github.com/OleksandrChekhovskyi/hax) installed and working in your terminal. Stellwerk looks for `hermes`, `pi` and `hax` on your `PATH`, then in `~/.local/bin`.
 
 Pick one of these three ways to run it.
 
@@ -197,10 +198,10 @@ On a Mac, Cmd works in place of Ctrl. On a phone, Enter adds a new line; use the
 
 ## FAQ and troubleshooting
 
-**Do I need both agents?**
-No. Stellwerk works with either one. An agent that isn't installed is simply hidden, and you can turn off one that is.
+**Do I need all the agents?**
+No. Stellwerk works with any one of them. An agent that isn't installed is simply hidden, and you can turn off one that is.
 
-**Hermes or Pi shows as "not installed".**
+**An agent shows as "not installed".**
 Stellwerk looks on its `PATH`, then in `~/.local/bin`. Services often get a shorter `PATH` than your shell. Set the full path to the agent under **Settings → Agents**, or add its folder to `PATH` in the service file.
 
 **The Hermes view says the gateway isn't ready.**

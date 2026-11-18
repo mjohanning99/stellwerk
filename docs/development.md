@@ -64,6 +64,7 @@ cd tools/e2e && npm install && npx playwright install chromium && cd -
 
 node tools/e2e/hermes.e2e.mjs <url> <password> <cwd> <outdir>     # talks to a real Hermes
 node tools/e2e/pi.e2e.mjs <url> <password> <cwd> <outdir>         # talks to a real Pi
+node tools/e2e/hax.e2e.mjs <url> <path-to-hax> <cwd> [outdir]       # hax with its mock provider
 node tools/e2e/sessions.e2e.mjs <url> <password|""> <outdir>      # deleting sessions, reasoning effort
 node tools/e2e/settings.e2e.mjs <url> <password|""> <outdir>      # changes settings: use a scratch STELLWERK_CONFIG
 node tools/e2e/looks.mjs <url> <password> <outdir>                # screenshots of the themes, no agent calls
@@ -71,6 +72,7 @@ node tools/e2e/looks.mjs <url> "" <tmp> --readme docs/screenshots  # the README 
 node tools/e2e/keyboard.e2e.mjs <url>                             # keyboard and screen-reader behaviour
 node tools/e2e/a11y.mjs <url> node_modules/axe-core/axe.min.js     # axe-core WCAG audit in every look and mode
 node tools/e2e/phone.e2e.mjs <url> [outdir]                       # phone layout
+node tools/e2e/reconnect.e2e.mjs <url>                            # missed turns after sleep, dead sockets
 node tools/e2e/perf-stream.mjs <url>                              # streaming render cost
 node tools/e2e/perf-history.mjs <url> [rows]                      # opening a long session (synthetic rows)
 ```
@@ -87,4 +89,4 @@ node tools/e2e/usage.e2e.mjs http://127.0.0.1:8799
 
 `sessions.e2e.mjs` deletes sessions. Its header explains how to point the server at a scratch Pi sessions folder (`PI_SESSIONS_DIR`) and trash folder (`STELLWERK_TRASH`) first.
 
-The Hermes and Pi tests send real prompts, so point them at a model you don't mind spending tokens on, and at a throwaway working folder.
+`hax.e2e.mjs` needs no account: its header shows how to run hax's mock provider with isolated folders. The Hermes and Pi tests send real prompts, so point them at a model you don't mind spending tokens on, and at a throwaway working folder.

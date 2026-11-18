@@ -30,6 +30,7 @@ from aiohttp import WSMsgType, web, ClientSession, WSServerHandshakeError
 
 from server import __version__, env
 from server.pi import PiManager, ws_pi
+from server.hax import HaxManager, ws_hax
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
@@ -242,6 +243,7 @@ def same_origin(request: web.Request) -> bool:
 BACKENDS = {
     "hermes": {"label": "Hermes", "binary": "hermes"},
     "pi": {"label": "Pi", "binary": "pi"},
+    "hax": {"label": "hax", "binary": "hax"},
 }
 
 
@@ -568,6 +570,9 @@ async def api_usage(request: web.Request) -> web.Response:
         if name == "hermes":
             db = Path(env("HERMES_DB") or HERMES_HOME / "state.db")
             res = await loop.run_in_executor(None, usage.hermes_usage, db)
+        elif name == "hax":
+            from server.hax import SESSIONS_DIR as HAX_SESSIONS
+            res = await loop.run_in_executor(None, usage.hax_usage, HAX_SESSIONS)
         elif name == "pi":
             res = await loop.run_in_executor(None, usage.pi_usage, SESSIONS_DIR)
         else:
@@ -734,6 +739,7 @@ async def on_startup(app: web.Application) -> None:
 
 async def on_cleanup(app: web.Application) -> None:
     await app["pi"].shutdown()
+    await app["hax"].shutdown()
     await app["http"].close()
 
 
@@ -745,6 +751,7 @@ def build_app(cfg: dict, listen: list[str] | None = None) -> web.Application:
     app["same_origin"] = same_origin
     app["backend_state"] = lambda name: backend_state(cfg, name)
     app["pi"] = PiManager(lambda: backend_command(cfg, "pi"))
+    app["hax"] = HaxManager(lambda: backend_command(cfg, "hax"))
     app.router.add_get("/", index)
     app.router.add_get("/api/me", api_me)
     app.router.add_get("/api/dirs", api_dirs)
@@ -760,6 +767,7 @@ def build_app(cfg: dict, listen: list[str] | None = None) -> web.Application:
     app.router.add_post("/api/settings/revoke", api_settings_revoke)
     app.router.add_get("/ws", ws_bridge)
     app.router.add_get("/ws/pi", ws_pi)
+    app.router.add_get("/ws/hax", ws_hax)
     app.router.add_static("/static/", WEB, show_index=False)
     app.on_startup.append(on_startup)
     app.on_cleanup.append(on_cleanup)

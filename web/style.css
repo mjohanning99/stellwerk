@@ -145,7 +145,9 @@ a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2
 .side-head { display: flex; align-items: center; gap: 8px; padding: 12px 12px 10px; }
 .side-head .be-switch { flex: 1; }
 .side-head .be-switch button { flex: 1; min-width: 0; }
-.side-head #new-session { flex: none; }
+.side-tools { display: flex; gap: 8px; align-items: center; margin: 0 12px 10px; }
+.side-tools .side-search { flex: 1; min-width: 0; margin: 0; }
+.side-tools #new-session { flex: none; min-height: 30px; }
 .side-search {
   margin: 0 12px 10px; height: 30px; padding: 0 10px; font-size: .8125rem;
   border: 1px solid var(--line); border-radius: var(--r-key); background: var(--well);
@@ -565,6 +567,7 @@ pre.dr-meta { margin: 0; }
 
 /* ---------------------------------------------------------------- status line keys
    Model (with effort) and cost are real keys, so they're easy to see and to hit. */
+#st-cost { flex: none; }
 #st-model, #st-cost {
   border: 1px solid var(--line-strong); border-radius: var(--r-key); background: var(--raise);
   padding: 2px 8px; color: var(--fg); line-height: 1.4;

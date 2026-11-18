@@ -1,0 +1,9 @@
+# hax mock-provider script for hax.e2e.mjs: each turn shows reasoning, runs `ls`, pauses, answers
+reasoning Looking at the folder first.
+tool bash {"command":"ls"}
+usage in=1200 out=40 cached=800 cost=0.0021
+end-turn
+delay 1500
+text The folder has a script.txt file.
+usage in=1300 out=25 cached=1100 cost=0.0012
+end-turn
