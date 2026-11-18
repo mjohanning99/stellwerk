@@ -511,6 +511,11 @@ async def ws_pi(request: web.Request) -> web.StreamResponse:
                     state = (await p.command({"type": "get_state"}, timeout=60)).get("data")
                 except Exception as e:
                     log.warning("get_state failed: %s", e)
+                    await asyncio.sleep(0.2)   # let the stderr reader catch up
+                    if p.exited:
+                        # Pi died on start; its own error is the useful part.
+                        tail = "\n".join(l for l in p.stderr_tail[-8:] if l.strip())
+                        raise RuntimeError(f"Pi exited while starting{': ' + tail if tail else ''}")
                 await reply({"handle": p.handle, "cwd": p.cwd, "state": state,
                              "replay": p.replay if p.streaming else [],
                              "open_ui": list(p.open_ui.values()),
