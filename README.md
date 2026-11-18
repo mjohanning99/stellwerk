@@ -103,7 +103,8 @@ The image contains only Stellwerk. It runs as your user, with your home folder m
 ```sh
 git clone https://github.com/mjohanning99/stellwerk && cd stellwerk
 hermes gateway install            # Hermes users: run the gateway as a host service
-cp .env.example .env              # then set UID, GID and USER (id -u; id -g; echo $USER)
+# who you are, for the container (run this as yourself, not with sudo)
+printf 'UID=%s\nGID=%s\nHOST_USER=%s\nHOST_HOME=%s\n' "$(id -u)" "$(id -g)" "$USER" "$HOME" > .env
 docker compose up -d --build
 ```
 

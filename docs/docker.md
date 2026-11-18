@@ -14,7 +14,7 @@ So the image contains only Stellwerk, and `compose.yaml` runs it like a normal i
 |---|---|
 | `user: "${UID}:${GID}"` | The agents run as you, and files they write stay yours. |
 | Your home mounted at the same path | Paths inside and outside the container match: the agents, their sessions, your projects and `~/.config/stellwerk`. |
-| `HOME` and `PATH` (with `$HOME/.local/bin`) | So Stellwerk finds `hermes` and `pi` where a normal install does. |
+| `HOME` and `PATH` (with `$HOME/.local/bin`), from `HOST_HOME` in `.env` | So Stellwerk finds `hermes` and `pi` where a normal install does. |
 | `network_mode: host` | The Hermes gateway only listens on the host's `127.0.0.1`. |
 | `/etc/passwd` and `/etc/group` mounted read-only | So your uid has a name inside the container. `ssh` and `git` want one. |
 | `init: true` | Reaps the Pi processes Stellwerk starts and stops. |
@@ -35,9 +35,10 @@ This works on Linux with the regular (rootful) Docker Engine. Docker Desktop on 
 2. **Tell compose who you are:**
 
    ```sh
-   cp .env.example .env
-   id -u; id -g; echo "$USER"   # put these in .env
+   printf 'UID=%s\nGID=%s\nHOST_USER=%s\nHOST_HOME=%s\n' "$(id -u)" "$(id -g)" "$USER" "$HOME" > .env
    ```
+
+   Run this as yourself, not with `sudo`. It writes your uid, gid, user name and home folder to `.env` (see `.env.example`). Compose reads them from there instead of from your shell, so `sudo docker compose …` works too.
 
 3. **Build and start it:**
 
@@ -54,7 +55,7 @@ The password commands work through compose too. Stop the server first, because i
 
 ```sh
 docker compose stop
-docker compose run --rm Stellwerk python -m server.app --set-password
+docker compose run --rm stellwerk python -m server.app --set-password
 docker compose start
 ```
 
@@ -85,9 +86,10 @@ Everything your user can. It runs as you, it can read and write your whole home 
 
 ## Troubleshooting
 
-- **`required variable UID is missing a value`**: create `.env` from `.env.example`.
+- **`required variable UID is missing a value`** (or `HOST_HOME`): create `.env` as in step 2.
+- **`PermissionError: … '/root/.config/stellwerk/config.json'`**: `HOST_HOME` is missing or set to `/root`. This happens with an older `.env` under `sudo`, which sets `HOME=/root`. Recreate `.env` as in step 2, as yourself, then `docker compose up -d`.
 - **"gateway not ready" or `service_manager_unavailable` in the Hermes view**: the gateway isn't running on the host. Run `hermes gateway status` on the host, then `hermes gateway install` or `hermes gateway start`.
 - **Hermes or Pi shows as not installed**: check that they're in `~/.local/bin` on the host, or set the full path under **Settings → Agents**.
 - **Files end up owned by the wrong user**: `UID` and `GID` in `.env` don't match `id -u` and `id -g`.
 - **Rootless Docker or Podman**: user ids are remapped, so `user: "${UID}:${GID}"` doesn't mean "you" there. With Podman, replace the `user:` line with `userns_mode: keep-id`. With rootless Docker, try `user: "0:0"` (which maps to your user). Neither is tested yet.
-- **Your user isn't in `/etc/passwd`** (LDAP, systemd-homed): remove the two `/etc/passwd` and `/etc/group` mounts and set `USER` in `.env`. `ssh` from inside the container may complain.
+- **Your user isn't in `/etc/passwd`** (LDAP, systemd-homed): remove the two `/etc/passwd` and `/etc/group` mounts and set `HOST_USER` in `.env`. `ssh` from inside the container may complain.

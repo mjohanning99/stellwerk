@@ -1,7 +1,10 @@
 # Stellwerk with Docker Compose (Linux only).
 #
-#   cp .env.example .env      # then put your own UID, GID and USER in it
+#   printf 'UID=%s\nGID=%s\nHOST_USER=%s\nHOST_HOME=%s\n' "$(id -u)" "$(id -g)" "$USER" "$HOME" > .env
 #   docker compose up -d --build
+#
+# Everything comes from .env rather than your shell, so it also works when you
+# run compose with sudo (which would otherwise swap in root's HOME and USER).
 #
 # The container runs as you, sees your home folder at the same path and shares
 # the host's network. That is what lets it start Pi and reach the Hermes
@@ -15,12 +18,11 @@ services:
     image: stellwerk:local
     # The Hermes gateway only listens on 127.0.0.1 of the host.
     network_mode: host
-    # Bash doesn't export UID and has no GID, so these come from .env.
     user: "${UID:?set UID in .env (id -u)}:${GID:?set GID in .env (id -g)}"
     environment:
-      HOME: ${HOME:?HOME must be set}
-      USER: ${USER:-me}
-      PATH: ${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
+      HOME: ${HOST_HOME:?set HOST_HOME in .env (echo $HOME)}
+      USER: ${HOST_USER:-me}
+      PATH: ${HOST_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
       STELLWERK_HOST: ${STELLWERK_HOST:-127.0.0.1}
       STELLWERK_PORT: ${STELLWERK_PORT:-7777}
       STELLWERK_ALLOWED_HOSTS: ${STELLWERK_ALLOWED_HOSTS:-}
@@ -28,7 +30,7 @@ services:
     volumes:
       # Your home at the same path: the agents, their sessions, your projects
       # and Stellwerk's own settings (~/.config/stellwerk) all live here.
-      - ${HOME}:${HOME}
+      - ${HOST_HOME}:${HOST_HOME}
       # So your uid has a name inside the container (ssh and git want one).
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
