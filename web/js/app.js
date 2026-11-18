@@ -227,7 +227,14 @@ class App {
     this.closeSidebar();
     if (!this.backend) return;
     if (s.id === this.activeId && this.backend.sid) return;
-    try { await this.backend.openSession(s.id, s); } catch (e) { this.view.toast(`Open failed: ${e.message}`, { err: true }); }
+    try { await this.backend.openSession(s.id, s); } catch (e) {
+      // Show which session failed, not the one that was open before.
+      this.activeId = s.id;
+      this.refreshSessionsSoon();
+      this.view.clear();
+      this.view.setTitle(s.title || 'Untitled', s.sub || '');
+      this.view.note(`✗ ${e.message}`, { err: true });
+    }
   }
 
   async deleteSessionRow(s) {

@@ -13,7 +13,7 @@ So the image contains only Stellwerk, and `compose.yaml` runs it like a normal i
 | Setting | Why |
 |---|---|
 | `user: "${UID}:${GID}"` | The agents run as you, and files they write stay yours. |
-| Your home mounted at the same path | Paths inside and outside the container match: the agents, their sessions, your projects and `~/.config/stellwerk`. |
+| Your home mounted at the same path | Paths inside and outside the container match: the agents, their sessions, your projects and `~/.config/stellwerk`. Folders outside your home need their own line under `volumes:`. |
 | `HOME` and `PATH` (with `$HOME/.local/bin`), from `HOST_HOME` in `.env` | So Stellwerk finds `hermes` and `pi` where a normal install does. |
 | `network_mode: host` | The Hermes gateway only listens on the host's `127.0.0.1`. |
 | `/etc/passwd` and `/etc/group` mounted read-only | So your uid has a name inside the container. `ssh` and `git` want one. |
@@ -89,6 +89,7 @@ Everything your user can. It runs as you, it can read and write your whole home 
 - **`required variable UID is missing a value`** (or `HOST_HOME`): create `.env` as in step 2.
 - **`PermissionError: … '/root/.config/stellwerk/config.json'`**: `HOST_HOME` is missing or set to `/root`. This happens with an older `.env` under `sudo`, which sets `HOME=/root`. Recreate `.env` as in step 2, as yourself, then `docker compose up -d`.
 - **"gateway not ready" or `service_manager_unavailable` in the Hermes view**: the gateway isn't running on the host. Run `hermes gateway status` on the host, then `hermes gateway install` or `hermes gateway start`.
+- **"the session's folder isn't visible inside the container"**: the container only sees your home folder. For projects elsewhere (say `/mnt/data`), add `- /mnt/data:/mnt/data` under `volumes:` in `compose.yaml`, then `docker compose up -d`. Hermes isn't affected, because its gateway runs on the host.
 - **Hermes or Pi shows as not installed**: check that they're in `~/.local/bin` on the host, or set the full path under **Settings → Agents**.
 - **Files end up owned by the wrong user**: `UID` and `GID` in `.env` don't match `id -u` and `id -g`.
 - **Rootless Docker or Podman**: user ids are remapped, so `user: "${UID}:${GID}"` doesn't mean "you" there. With Podman, replace the `user:` line with `userns_mode: keep-id`. With rootless Docker, try `user: "0:0"` (which maps to your user). Neither is tested yet.

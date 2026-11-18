@@ -31,6 +31,9 @@ services:
       # Your home at the same path: the agents, their sessions, your projects
       # and Stellwerk's own settings (~/.config/stellwerk) all live here.
       - ${HOST_HOME}:${HOST_HOME}
+      # Folders outside your home that you work in (or that old sessions
+      # point at), at the same path, e.g.:
+      # - /mnt/data:/mnt/data
       # So your uid has a name inside the container (ssh and git want one).
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro

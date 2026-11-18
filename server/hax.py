@@ -37,7 +37,7 @@ from pathlib import Path
 
 from aiohttp import WSMsgType, web
 
-from server import env
+from server import env, missing_folder
 from server.pi import complete_path, make_snippet
 
 log = logging.getLogger("stellwerk.hax")
@@ -281,7 +281,7 @@ class HaxManager:
             cwd = data["header"].get("cwd") or cwd
         cwd = os.path.realpath(os.path.expanduser(cwd or str(HOME)))
         if not os.path.isdir(cwd):
-            raise ValueError(f"the session's folder no longer exists: {cwd}")
+            raise ValueError(missing_folder(cwd))
         run = HaxRun(self, cwd, str(_checked(path)) if path else None)
         self.runs[run.id] = run
         try:

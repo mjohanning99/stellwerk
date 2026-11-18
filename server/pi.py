@@ -32,7 +32,7 @@ from pathlib import Path
 
 from aiohttp import WSMsgType, web
 
-from server import env
+from server import env, missing_folder
 
 log = logging.getLogger("stellwerk.pi")
 
@@ -247,7 +247,7 @@ class PiManager:
             header = _read_header(Path(session_path))
             cwd = (header or {}).get("cwd") or cwd
             if not cwd or not os.path.isdir(cwd):
-                raise ValueError(f"the session's folder no longer exists: {cwd}")
+                raise ValueError(missing_folder(cwd))
         cwd = os.path.realpath(os.path.expanduser(cwd or str(HOME)))
         if not os.path.isdir(cwd):
             raise ValueError(f"not a directory: {cwd}")

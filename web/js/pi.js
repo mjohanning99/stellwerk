@@ -120,6 +120,7 @@ export class PiBackend {
 
   async _attach(params) {
     if (this.handle) this.rpc.request('pi.detach', { handle: this.handle }).catch(() => {});
+    this.handle = null;   // if the open fails, don't keep sending to the old session
     this.view.clear();
     this.view.setBusy(false);
     this.view.note('… starting Pi');
@@ -162,7 +163,7 @@ export class PiBackend {
     await this.whenReady();
     this.sid = id;
     try { await this._attach({ session_path: id }); }
-    catch (e) { this.view.clear(); this.view.note(`✗ ${e.message}`, { err: true }); throw e; }
+    catch (e) { this.view.clear(); throw e; }
   }
 
   _applyState() {
