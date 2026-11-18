@@ -8,7 +8,7 @@ The Docker setup is for people who'd rather not keep a Python virtualenv around.
 
 Hermes and Pi install themselves into your home folder: `~/.local/bin/hermes` is a small wrapper around `~/.hermes`, which brings its own Python, and `~/.local/bin/pi` is a launcher into `~/.pi/agent`, which brings its own Node. Neither belongs in an image, and both need your configuration, your API keys and your sessions.
 
-So the image contains only Stellwerk, and `compose.yaml` runs it like a normal install would:
+So the image contains only Stellwerk (plus Node, which Pi runs on), and `compose.yaml` runs it like a normal install would:
 
 | Setting | Why |
 |---|---|
@@ -72,10 +72,10 @@ That's why step 1 says to run the gateway on the host. `hermes gateway install` 
 
 Stellwerk starts each Pi session as `pi --mode rpc`, in the session's folder, from inside the container. Pi's own files come from your home, but every command Pi's bash tool runs, runs in the container. It only finds the programs installed in the image.
 
-The image includes `bash`, `git`, `curl`, `ripgrep`, `less`, `openssh-client` and `procps`. Add whatever your projects need when you build:
+The image includes Node 22 (with `npm`), which Pi itself needs, plus `bash`, `git`, `curl`, `ripgrep`, `less`, `openssh-client` and `procps`. If your Pi brought its own Node (in `~/.local/share/pi-node`), Pi uses that one instead. Add whatever your projects need when you build:
 
 ```sh
-docker compose build --build-arg EXTRA_PACKAGES="build-essential nodejs make"
+docker compose build --build-arg EXTRA_PACKAGES="build-essential make python3-venv"
 ```
 
 Hermes isn't affected: its tools run in the gateway, which runs on the host.
@@ -90,6 +90,7 @@ Everything your user can. It runs as you, it can read and write your whole home 
 - **`PermissionError: … '/root/.config/stellwerk/config.json'`**: `HOST_HOME` is missing or set to `/root`. This happens with an older `.env` under `sudo`, which sets `HOME=/root`. Recreate `.env` as in step 2, as yourself, then `docker compose up -d`.
 - **"gateway not ready" or `service_manager_unavailable` in the Hermes view**: the gateway isn't running on the host. Run `hermes gateway status` on the host, then `hermes gateway install` or `hermes gateway start`.
 - **"the session's folder isn't visible inside the container"**: the container only sees your home folder. For projects elsewhere (say `/mnt/data`), add `- /mnt/data:/mnt/data` under `volumes:` in `compose.yaml`, then `docker compose up -d`. Hermes isn't affected, because its gateway runs on the host.
+- **`env: 'node': No such file or directory`** when Pi starts: the image was built before it included Node. Run `docker compose up -d --build`.
 - **Hermes or Pi shows as not installed**: check that they're in `~/.local/bin` on the host, or set the full path under **Settings → Agents**.
 - **Files end up owned by the wrong user**: `UID` and `GID` in `.env` don't match `id -u` and `id -g`.
 - **Rootless Docker or Podman**: user ids are remapped, so `user: "${UID}:${GID}"` doesn't mean "you" there. With Podman, replace the `user:` line with `userns_mode: keep-id`. With rootless Docker, try `user: "0:0"` (which maps to your user). Neither is tested yet.

@@ -98,7 +98,7 @@ Open <http://127.0.0.1:7777>. That's it.
 
 ### 2. Docker Compose
 
-The image contains only Stellwerk. It runs as your user, with your home folder mounted, so it can use the agents you've already installed. If you use Hermes, start its gateway on the host first.
+The image contains Stellwerk and the Node that Pi needs. It runs as your user, with your home folder mounted, so it can use the agents you've already installed. If you use Hermes, start its gateway on the host first.
 
 ```sh
 git clone https://github.com/mjohanning99/stellwerk && cd stellwerk
