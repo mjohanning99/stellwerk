@@ -1,14 +1,6 @@
 // Stellwerk: sets the stored appearance on <html> before the first paint, so the page
 // does not flash in the default look. A classic script because the CSP forbids inline ones.
 // It mirrors applyAppearance() in theme.js (the source of truth); keep the two in step.
-// Settings saved before the rename used "hw." keys: copy them over once.
-try {
-  for (var i = 0; i < localStorage.length; i++) {
-    var key = localStorage.key(i);
-    if (key && key.indexOf('hw.') === 0 && localStorage.getItem('sw.' + key.slice(3)) === null) localStorage.setItem('sw.' + key.slice(3), localStorage.getItem(key));
-  }
-} catch (e) { /* storage blocked */ }
-
 (function () {
   var root = document.documentElement, d = root.dataset;
   function read(k, def) {

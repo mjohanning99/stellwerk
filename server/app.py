@@ -34,15 +34,7 @@ from server.pi import PiManager, ws_pi
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 WEB = ROOT / "web"
-def _config_dir() -> Path:
-    if env("CONFIG"):
-        return Path(env("CONFIG"))
-    new, old = Path.home() / ".config" / "stellwerk", Path.home() / ".config" / "hermes-web"
-    # installs from before the rename keep their settings where they are
-    return old if not new.exists() and (old / "config.json").exists() else new
-
-
-CONFIG_DIR = _config_dir()
+CONFIG_DIR = Path(env("CONFIG", Path.home() / ".config" / "stellwerk"))
 CONFIG_FILE = CONFIG_DIR / "config.json"
 COOKIE = "sw_session"
 SESSION_TTL = 30 * 24 * 3600
