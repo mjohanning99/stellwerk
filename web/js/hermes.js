@@ -186,13 +186,21 @@ export class HermesBackend {
     const sid = this.sid;
     try {
       if (this.s.replayEpoch && this.s.lastSeq != null) {
-        const ev = await this.rpc.request('session.events.since', { session_id: sid, last_sequence: this.s.lastSeq, replay_epoch: this.s.replayEpoch });
+        const since = (last) => this.rpc.request('session.events.since', { session_id: sid, last_sequence: last, replay_epoch: this.s.replayEpoch });
+        const apply = (ev) => { for (const e of ev.events || []) this._onEvent({ type: e.type, payload: e.payload || {}, session_id: e.session_id, raw: e }); };
+        const ev = await since(this.s.lastSeq);
         if (!ev.snapshot_required && !ev.truncated) {
-          this._resubscribe = true;
+          // Apply what we missed first: resuming moves last_sequence to the newest
+          // event, which would make every missed event look like a duplicate.
+          apply(ev);
           const snap = await this.rpc.request('session.resume', { session_id: sid, display_projection: true, omit_messages: true });
-          this._resubscribe = false;
+          const seen = this.s.lastSeq;
           this._applyMeta(snap);
-          for (const e of ev.events || []) this._onEvent({ type: e.type, payload: e.payload || {}, session_id: e.session_id, raw: e });
+          this.s.lastSeq = seen;
+          // events between the first catch-up and the new subscription
+          const gap = await since(seen);
+          if (gap.snapshot_required || gap.truncated) { await this.openSession(sid); return; }
+          apply(gap);
           this._renderPrompts(snap);
           return;
         }

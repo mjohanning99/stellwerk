@@ -15,8 +15,46 @@ export class Rpc extends EventTarget {
     this.stopped = false;
   }
 
-  start() { this.stopped = false; this._connect(); }
-  stop() { this.stopped = true; this.ws?.close(); }
+  start() {
+    this.stopped = false;
+    this._connect();
+    // Phones freeze background tabs; the socket can die without a close event. When the
+    // page comes back, check that the connection still answers, else reconnect.
+    if (!this._wake) {
+      this._wake = () => { if (document.visibilityState === 'visible') this.checkAlive(); };
+      document.addEventListener('visibilitychange', this._wake);
+      window.addEventListener('online', this._wake);
+      window.addEventListener('pageshow', this._wake);
+    }
+  }
+
+  // Any reply (even "unknown method") proves the socket is alive.
+  async checkAlive(timeout = 4000) {
+    if (this.stopped || this.state !== 'open' || this._checking) return;
+    this._checking = true;
+    try {
+      await this.request('bridge.ping', {}, { timeout });
+    } catch (e) {
+      if (!(e instanceof RpcError) || e.code === -32001) this._kill();
+    } finally { this._checking = false; }
+  }
+
+  _kill() {
+    const ws = this.ws;
+    if (!ws) return;
+    try { ws.close(); } catch { /* already gone */ }
+    ws.onclose?.({ code: 1006 });
+  }
+  stop() {
+    this.stopped = true;
+    if (this._wake) {
+      document.removeEventListener('visibilitychange', this._wake);
+      window.removeEventListener('online', this._wake);
+      window.removeEventListener('pageshow', this._wake);
+      this._wake = null;
+    }
+    this.ws?.close();
+  }
 
   _setState(s, detail) {
     this.state = s;
@@ -32,7 +70,8 @@ export class Rpc extends EventTarget {
     ws.onopen = () => { this.backoff = 500; };
     ws.onmessage = (ev) => this._onFrame(ev.data);
     ws.onclose = (ev) => {
-      if (this.ws !== ws) return;
+      if (this.ws !== ws || ws._closed) return;
+      ws._closed = true;
       for (const [, p] of this.pending) { clearTimeout(p.timer); p.reject(new RpcError(-32000, 'connection closed')); }
       this.pending.clear();
       this._setState('closed', { code: ev.code });

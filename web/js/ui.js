@@ -506,8 +506,15 @@ export class View {
   // ---- status line
   setStatus({ model, effort, cwd, context, cost, tps, busy } = {}) {
     if (tps !== undefined) this._showTps(tps?.v, tps?.exact);
-    if (model !== undefined) $('st-model').textContent = model ? `◆ ${model}` : '';
-    if (effort !== undefined) $('st-effort').textContent = effort ? `◔ ${effort}` : '';
+    if (model !== undefined) this._model = model;
+    if (effort !== undefined) { this._effort = effort; $('st-effort').textContent = effort ? `◔ ${effort}` : ''; }
+    if (model !== undefined || effort !== undefined) {
+      // one key for model and effort: "◆ qwen · low"
+      const e = String(this._effort || '').replace(/^(effort|thinking)\s+/, '');
+      const m = $('st-model');
+      m.textContent = this._model ? `◆ ${this._model}${e ? ` · ${e}` : ''}` : '';
+      m.title = `Model${e ? ` and reasoning effort (${e})` : ''}: click to change`;
+    }
     if (cwd !== undefined) { this.cwd = cwd || ''; $('st-cwd').textContent = homeify(cwd || '', this.home); }
     if (context !== undefined) {
       const el = $('st-context');
@@ -518,7 +525,7 @@ export class View {
         el.append(bar, `${fmtTokens(context.used)}${context.max ? '/' + fmtTokens(context.max) : ''}`);
       }
     }
-    if (cost !== undefined) $('st-cost').textContent = cost ? (typeof cost === 'number' ? `$${cost.toFixed(cost < 1 ? 3 : 2)}` : cost) : '';
+    if (cost !== undefined) $('st-cost').textContent = cost ? (typeof cost === 'number' ? `$${cost.toFixed(cost < 1 ? 3 : 2)}` : cost) : 'Usage';
     if (busy !== undefined) this.setBusy(busy);
   }
 

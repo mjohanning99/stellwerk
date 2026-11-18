@@ -511,31 +511,62 @@ class App {
 
   closeDrawer() { this.drawerKind = null; this.view.closeDrawer(); }
 
+  // Model sheet: reasoning effort on top, then recently used models, then everything.
   async openModelPicker() {
+    const b = this.backend;
+    if (!b) return;
     this.drawerKind = 'model';
-    const search = h('input', { class: 'side-search', placeholder: 'Filter models…', style: 'margin:0 0 10px;width:100%' });
+    const effortBox = h('div', { class: 'mp-effort' });
+    const search = h('input', { class: 'side-search', type: 'search', placeholder: 'Filter models…', 'aria-label': 'Filter models', style: 'margin:0 0 10px;width:100%' });
     const list = h('div');
-    const box = h('div', {}, search, list);
-    this.view.openDrawer('Model', box);
+    this.view.openDrawer('Model', h('div', {}, effortBox, search, list));
     list.append(h('div', { class: 'dr-empty', text: 'Loading…' }));
+    b.effortOptions?.().then((o) => {
+      if (this.drawerKind !== 'model' || !o?.levels || o.levels.length < 2) return;
+      effortBox.replaceChildren(
+        h('div', { class: 'side-group', style: 'padding-left:0', text: b.name === 'pi' ? 'Thinking level' : 'Reasoning effort' }),
+        this.seg(o.levels.map((l) => ({ id: l.id, name: l.name, title: l.desc || l.name })), o.current, async (id) => {
+          try { await b.setEffort(id); } catch (e) { this.view.toast(e.message, { err: true }); }
+          this.openModelPicker();
+        }, 'Reasoning effort'));
+    }).catch(() => {});
     let items = [];
-    try { items = await this.backend.modelOptions(); } catch (e) { list.replaceChildren(h('div', { class: 'dr-empty', text: e.message })); return; }
+    try { items = await b.modelOptions(); } catch (e) { list.replaceChildren(h('div', { class: 'dr-empty', text: e.message })); return; }
+    if (this.drawerKind !== 'model') return;
+    const key = (it) => `${it.value.provider || ''}/${it.value.model}`;
+    const recentKey = `recentModels.${b.name}`;
+    const recent = store.get(recentKey, []);
+    const pick = async (it) => {
+      this.closeDrawer();
+      store.set(recentKey, [key(it), ...recent.filter((k) => k !== key(it))].slice(0, 5));
+      try { await b.setModel(it.value.model, it.value.provider); } catch (e) { this.view.toast(e.message, { err: true }); }
+    };
+    const row = (it, withGroup) => {
+      const meta = [withGroup ? it.group : '', it.desc].filter(Boolean).join(' · ');
+      return h('button', { class: `session-item${it.current ? ' active' : ''}`, 'aria-current': it.current ? 'true' : null, onclick: () => pick(it) },
+        h('div', { class: 'si-title', text: it.label }), meta ? h('div', { class: 'si-meta', text: meta }) : null);
+    };
     const render = () => {
       const q = search.value.toLowerCase();
       list.replaceChildren();
+      if (!q) {
+        const rec = recent.map((k) => items.find((it) => key(it) === k)).filter(Boolean);
+        const cur = items.find((it) => it.current);
+        const top = [...(cur && !rec.includes(cur) ? [cur] : []), ...rec];
+        if (top.length) { list.append(h('div', { class: 'side-group', text: 'Current and recent' }), ...top.map((it) => row(it, true))); }
+      }
       let g = null;
       for (const it of items.filter((x) => !q || x.label.toLowerCase().includes(q) || (x.group || '').toLowerCase().includes(q))) {
         if (it.group !== g) { g = it.group; list.append(h('div', { class: 'side-group', text: g })); }
-        list.append(h('button', { class: `session-item${it.current ? ' active' : ''}`, onclick: async () => {
-          this.closeDrawer();
-          try { await this.backend.setModel(it.value.model, it.value.provider); } catch (e) { this.view.toast(e.message, { err: true }); }
-        } }, h('div', { class: 'si-title', text: it.label }), it.desc ? h('div', { class: 'si-meta', text: it.desc }) : null));
+        list.append(row(it, false));
       }
+      if (!list.childElementCount) list.append(h('div', { class: 'dr-empty', text: 'No model matches.' }));
     };
     search.oninput = render;
     render();
-    search.focus();
+    if (!matchMedia('(pointer: coarse)').matches) search.focus();
   }
+
 
   // ------------------------------------------------------------ settings
   async openSettings() {
@@ -760,11 +791,10 @@ class App {
         this.seg([{ id: 'today', name: 'Today' }, { id: 'week', name: '7 days' }, { id: 'month', name: '30 days' }, { id: 'all', name: 'All' }],
           period, (p) => this.openUsage(p), 'Period'),
         grid(per.total),
-        per.models.length ? h('div', { class: 'usage-models' }, h('table', {},
-          h('thead', {}, h('tr', {}, ...['Model', 'In', 'Out', 'Cache r/w', 'Cost'].map((c) => h('th', { scope: 'col', text: c })))),
-          h('tbody', {}, ...per.models.map((m) => h('tr', {},
-            h('th', { scope: 'row', text: m.model }), h('td', { text: fmtTokens(m.input) }), h('td', { text: fmtTokens(m.output) }),
-            h('td', { text: `${fmtTokens(m.cache_read)} / ${fmtTokens(m.cache_write)}` }), h('td', { text: money(m.cost) }))))))
+        per.models.length ? h('ul', { class: 'usage-models', 'aria-label': 'By model' }, ...per.models.map((m) => h('li', {},
+            h('div', { class: 'um-head' }, h('span', { class: 'um-name', text: m.model, title: m.model }), h('span', { class: 'um-cost', text: money(m.cost) })),
+            h('div', { class: 'um-meta', text: [`${fmtTokens(m.input)} in`, `${fmtTokens(m.output)} out`,
+              m.cache_read || m.cache_write ? `cache ${fmtTokens(m.cache_read)} read / ${fmtTokens(m.cache_write)} written` : '', `${m.calls} call${m.calls === 1 ? '' : 's'}`].filter(Boolean).join(' · ') }))))
           : h('div', { class: 'dr-empty', text: 'Nothing in this period.' }),
         h('div', { class: 'set-hint', text: b.name === 'hermes'
           ? `From Hermes' session store (${all.sessions} session${all.sessions === 1 ? '' : 's'} with messages). Deleted sessions no longer count; a session's usage is dated by when it was last used.`

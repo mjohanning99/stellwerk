@@ -346,7 +346,12 @@ a { color: var(--link); text-decoration-thickness: 1px; text-underline-offset: 2
 .usage-grid { display: grid; grid-template-columns: max-content 1fr; gap: 4px 18px; margin: 10px 0 12px; font-size: .8125rem; }
 .usage-grid dt { color: var(--dim); }
 .usage-grid dd { margin: 0; font: 500 .8125rem var(--mono); text-align: right; max-width: 14em; }
-.usage-models { overflow-x: auto; margin-top: 4px; }
+.usage-models { list-style: none; padding: 0; margin: 4px 0 0; border-top: 1px solid var(--line); }
+.usage-models li { padding: 7px 0; border-bottom: 1px solid var(--line); }
+.um-head { display: flex; gap: 12px; align-items: baseline; }
+.um-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 500 .8125rem var(--mono); }
+.um-cost { font: 500 .8125rem var(--mono); }
+.um-meta { font-size: .75rem; color: var(--dim); margin-top: 2px; }
 .usage-models table { border-collapse: collapse; width: 100%; font: 400 .75rem var(--mono); }
 .usage-models th, .usage-models td { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
 .usage-models th[scope=row], .usage-models thead th:first-child { text-align: left; font-weight: 500; max-width: 16em; overflow: hidden; text-overflow: ellipsis; }
@@ -556,4 +561,23 @@ pre.dr-meta { margin: 0; }
 @media (max-width: 520px) {
   .set-appearance .set-label { width: 100%; }
   .set-appearance .set-warn { margin-left: 0; }
+}
+
+/* ---------------------------------------------------------------- status line keys
+   Model (with effort) and cost are real keys, so they're easy to see and to hit. */
+#st-model, #st-cost {
+  border: 1px solid var(--line-strong); border-radius: var(--r-key); background: var(--raise);
+  padding: 2px 8px; color: var(--fg); line-height: 1.4;
+}
+#st-model:hover, #st-cost:hover { border-color: var(--accent); color: var(--fg); }
+#st-model::after { content: " ▾"; color: var(--faint); }
+#st-model:empty, #st-model:empty::after { display: none; }
+#st-effort { display: none; }   /* shown inside the model key; changed in the model sheet */
+.mp-effort .seg { flex-wrap: wrap; margin-bottom: 14px; }
+@media (max-width: 860px) {
+  .statusline { flex-wrap: wrap; row-gap: 6px; padding-top: 8px; }
+  #st-busy:not(:empty) { flex: 1 0 100%; order: -1; }   /* working…: its own line */
+  #st-tps, #st-context .ctx-bar + * { display: none; }
+  #st-model { max-width: 60%; }
+  #st-model, #st-cost { padding: 5px 10px; font-size: .78125rem; }   /* bigger tap targets */
 }
