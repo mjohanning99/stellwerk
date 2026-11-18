@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Stellwerk">
+  <!-- a railway switch: one track runs straight on, the other branches off; a signal lamp beside it -->
+  <rect width="32" height="32" rx="7" fill="#1d4ed8"/>
+  <g fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round">
+    <path d="M11 28 V5"/>
+    <path d="M11 20 C11 13 21 13 21 5"/>
+  </g>
+  <circle cx="23" cy="24" r="3" fill="#fbbf24"/>
+</svg>

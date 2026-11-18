@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+<meta name="theme-color" content="#141413">
+<title>Stellwerk</title>
+<link rel="icon" href="/static/logo.svg" type="image/svg+xml">
+<script src="/static/js/theme-boot.js"></script>
+<link rel="stylesheet" href="/static/themes.css">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<a class="skip-link" href="#input">Skip to the message box</a>
+<div id="login" class="login" hidden>
+  <form id="login-form" class="login-card">
+    <img class="login-logo" src="/static/logo.svg" alt="" width="56" height="56">
+    <h1>Stellwerk</h1>
+    <label for="login-pw" class="sr-only">Password</label>
+    <input id="login-pw" type="password" autocomplete="current-password" placeholder="Password" autofocus aria-describedby="login-err">
+    <button type="submit" class="btn btn-primary">Sign in</button>
+    <div id="login-err" class="login-err" role="alert"></div>
+  </form>
+</div>
+
+<div id="app" class="app" hidden>
+  <aside id="sidebar" class="sidebar" aria-label="Sessions">
+    <div class="side-head">
+      <span class="brand">Stellwerk</span>
+      <button id="new-session" class="key" title="New session (Ctrl+Alt+N)">+ New</button>
+    </div>
+    <input id="session-search" class="side-search" type="search" placeholder="Search sessions…  Ctrl+K" autocomplete="off" aria-label="Search conversations (Ctrl+K)">
+    <nav id="session-list" class="session-list" aria-label="Conversations"></nav>
+    <div class="side-foot">
+      <button id="btn-settings" class="key" title="Settings (Ctrl+,)">⚙ Settings</button>
+      <button id="theme-toggle" class="key" title="Light, dark or follow the system" aria-label="Colour mode: follow the system">◐</button>
+      <span class="grow"></span>
+      <button id="logout" class="btn-ghost" title="Sign out">Sign out</button>
+    </div>
+  </aside>
+  <div id="scrim" class="scrim" aria-hidden="true"></div>
+
+  <main class="main">
+    <header class="topbar">
+      <button id="menu" class="btn-ghost menu-btn" aria-label="Sessions" aria-controls="sidebar" aria-expanded="false">☰</button>
+      <div class="title-wrap">
+        <h1 class="session-title"><button id="session-title" class="title-btn" title="Rename this session">New session</button></h1>
+        <div id="session-sub" class="session-sub"></div>
+      </div>
+      <div class="top-actions">
+        <button id="btn-subagents" class="key" title="Subagents" aria-label="Subagents" hidden><span aria-hidden="true">⑂</span> <span id="subagent-count">0</span></button>
+        <button id="btn-changes" class="key" title="Changes" aria-label="Changes"><span aria-hidden="true">±</span> <span class="lbl">Changes</span></button>
+        <span id="conn" class="conn" role="img" aria-label="Connection: not connected" title="Connection"></span>
+      </div>
+    </header>
+
+    <section id="transcript" class="transcript" aria-label="Conversation" tabindex="-1">
+      <div id="rows" class="rows"></div>
+      <div id="empty" class="empty">
+        <div class="empty-mark">☤</div>
+        <div>What should Hermes work on?</div>
+        <div class="empty-hint">Type <kbd>/</kbd> for commands · <kbd>@</kbd> for files · <kbd>Esc</kbd> to interrupt</div>
+      </div>
+      <div id="no-backend" class="empty no-backend" hidden>
+        <div class="empty-mark">⚙</div>
+        <div>No agent is turned on.</div>
+        <div class="empty-hint">Install Hermes or Pi, or turn one on in Settings.</div>
+        <button id="no-backend-settings" class="btn btn-primary">Open Settings</button>
+      </div>
+    </section>
+
+    <div id="prompts" class="prompts"></div>
+
+    <footer class="composer-wrap">
+      <div id="widgets" class="widgets"></div>
+      <div id="queue" class="queue"></div>
+      <div id="attachments" class="attachments"></div>
+      <div id="popup" class="popup" role="listbox" aria-label="Suggestions" hidden></div>
+      <div class="composer">
+        <span class="caret">›</span>
+        <textarea id="input" rows="1" placeholder="Message Hermes…" autocomplete="off" spellcheck="false" aria-label="Message"
+          aria-autocomplete="list" aria-controls="popup"></textarea>
+        <label class="btn-ghost attach-btn" title="Attach image or file">
+          <span aria-hidden="true">+</span><input id="file-input" type="file" multiple class="sr-only" aria-label="Attach images or files">
+        </label>
+        <button id="send" class="send" title="Send (Enter)" aria-label="Send">↵</button>
+      </div>
+      <div class="statusline">
+        <span id="st-busy" class="st-busy"></span>
+        <button type="button" id="st-model" class="st-item st-click" title="Change model"></button>
+        <button type="button" id="st-effort" class="st-item st-click" title="Reasoning effort"></button>
+        <span id="st-cwd" class="st-item"></span>
+        <span class="st-spacer"></span>
+        <span id="st-ext" class="st-item" title="Extension status"></span>
+        <span id="st-context" class="st-item" title="Context window"></span>
+        <button type="button" id="st-tps" class="st-item st-click" title="Tokens per second (≈ while streaming, exact when the reply ends). Click for usage."></button>
+        <button type="button" id="st-cost" class="st-item st-click" title="Session cost or tokens. Click for usage."></button>
+      </div>
+      <div id="announce" class="sr-only" role="status" aria-live="polite"></div>
+    </footer>
+  </main>
+
+  <aside id="drawer" class="drawer" aria-labelledby="drawer-title" hidden>
+    <div class="drawer-head">
+      <h2 id="drawer-title" tabindex="-1"></h2>
+      <button id="drawer-close" class="btn-ghost" aria-label="Close" title="Close (Esc)">✕</button>
+    </div>
+    <div id="drawer-body" class="drawer-body"></div>
+  </aside>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="/static/vendor/marked.min.js"></script>
+<script src="/static/vendor/purify.min.js"></script>
+<script src="/static/vendor/highlight.min.js"></script>
+<script type="module" src="/static/js/app.js"></script>
+</body>
+</html>

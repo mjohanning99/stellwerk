@@ -1,0 +1,33 @@
+# systemd user unit for Stellwerk. Install it with:
+#   cp contrib/stellwerk.service ~/.config/systemd/user/
+#   (edit WorkingDirectory and ExecStart if you cloned somewhere other than ~/stellwerk)
+#   systemctl --user daemon-reload && systemctl --user enable --now stellwerk
+# To keep it running after you log out: sudo loginctl enable-linger $USER
+# Logs: journalctl --user -u stellwerk -f
+#
+# Hermes users: Stellwerk starts the Hermes gateway on demand if it isn't
+# running. A gateway started that way lives inside this unit and stops with it;
+# `hermes gateway install` gives the gateway a service of its own instead.
+#
+# To change the address or port, edit the Environment= lines below, or run
+# `systemctl --user edit Stellwerk` and override them there. Set a password
+# (in the app's Settings) before listening on anything but 127.0.0.1.
+[Unit]
+Description=Stellwerk: a web UI for the Hermes and Pi coding agents
+After=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/stellwerk
+# The agents are looked up on PATH (then ~/.local/bin); include wherever you installed them.
+Environment=PATH=%h/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=STELLWERK_HOST=127.0.0.1
+Environment=STELLWERK_PORT=7777
+ExecStart=%h/stellwerk/.venv/bin/python -m server.app
+Restart=on-failure
+RestartSec=3
+KillMode=mixed
+TimeoutStopSec=20
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+tools/e2e/node_modules
+tools/e2e/package-lock.json
+.claude/
+.env
